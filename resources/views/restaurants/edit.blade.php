@@ -39,9 +39,11 @@
                      <div class="form-group">
                          <strong>Image:</strong>
                          <input type="file" name="images[]" multiple class="form-control" placeholder="image">
-                         <input type="hidden" name="oldImages[]" multiple class="form-control" placeholder="image" value="{{$restaurant->image}}">
-                         @foreach (json_decode($restaurant->image) as $image)
-                            <img src="/image/{{preg_replace('([^A-Za-z0-9])', '', $restaurant->name)}}/{{ $image }}" width="100px">
+                         <input type="hidden" name="oldImages[]" id="oldImages" multiple class="form-control" placeholder="image" value="{{$restaurant->image}}">
+                         <input type="hidden" id="pathImg" multiple class="form-control" placeholder="image" value="/image/{{preg_replace('([^A-Za-z0-9])', '', $restaurant->name)}}/">
+                         <input type="hidden" name="imagesToCompare" multiple class="form-control" placeholder="image" value="{{$restaurant->image}}">
+                        @foreach (json_decode($restaurant->image) as $image)
+                            <img src="/image/{{preg_replace('([^A-Za-z0-9])', '', $restaurant->name)}}/{{ $image }}" width="100px" class="image-restaurant">
                         @endforeach
                      </div>
                  </div>
@@ -51,4 +53,23 @@
              </div>
           
          </form>
+         <script>
+            $( ".image-restaurant" ).click(function() {
+                const pathUrl = $("#pathImg").val()
+                const oldImages = JSON.parse($("#oldImages").val() || "[]").map((img)=> {
+                    return img.replace(pathUrl, '')
+                })
+
+                const imageToDelete = $(this).attr("src").replace(pathUrl, '') 
+                const imagesToDelete = []
+
+                const imagesArrFiltered = oldImages.filter((img)=> {
+                    return img != imageToDelete
+                })
+
+                $(this).css("display", "none");
+
+                $("#oldImages").val(JSON.stringify(imagesArrFiltered)) 
+            });
+         </script>
      @endsection 

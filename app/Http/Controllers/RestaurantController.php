@@ -98,23 +98,45 @@ class RestaurantController extends Controller
 
         $input = $request->all();
         $validName = preg_replace('([^A-Za-z0-9])', '', $input["name"]);
+
         if($request->hasfile('images'))
         {
-            if($input["oldImages"]!=null){
-                foreach(json_decode($input["oldImages"][0]) as $oldImage){
-                    unlink(public_path().'/image/'.$validName.'/'.$oldImage);
-                }
-            }
+
            foreach($request->file('images') as $image)
            {
                $name=time().'.'.$image->getClientOriginalName();
                $image->move(public_path().'/image/'.$validName.'/', $name);  
                $data[] = $name;  
            }
+
+           $oldImages = json_decode($input["imagesToCompare"]);
+           $imagesToDelete = json_decode($input["oldImages"][0]);
+
+           foreach($oldImages as $oi){
+               if(!in_array($oi,$imagesToDelete)){
+                   unlink(public_path().'/image/'.$validName.'/'.$oi);
+               }else{
+                   $data[] = $oi;
+               }
+           }
+           
            $input["image"] = json_encode($data);
 
         }else{
-            unset($input['image']);
+
+            $oldImages = json_decode($input["imagesToCompare"]);
+            $imagesToDelete = json_decode($input["oldImages"][0]);
+
+            foreach($oldImages as $oi){
+                if(!in_array($oi,$imagesToDelete)){
+                    unlink(public_path().'/image/'.$validName.'/'.$oi);
+                }else{
+                    $newArr[] = $oi;
+                }
+            }
+           
+            $input["image"] = json_encode($newArr);
+           
         }
           
         $restaurant->update($input);
@@ -133,7 +155,7 @@ class RestaurantController extends Controller
     {
         $nameRestaurant = $restaurant->name;
         $validName = preg_replace('([^A-Za-z0-9])', '', $nameRestaurant);
-        if($restaurant->image != null){
+        if(($restaurant->image != null) && count(json_decode($restaurant->image)) >= 1){
             foreach(json_decode($restaurant->image) as $img){
                 unlink(public_path().'/image/'.$validName.'/'.$img);
             }
